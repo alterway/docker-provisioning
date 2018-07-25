@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="documentation" description="Documentation build definition" default="documentation:info" basedir=".">
+
+    <target name="documentation:info">
+        <echo>This file contains the central configuration for generate documentation</echo>
+    </target>
+
+    <if>
+        <not>
+            <isset property="doc.services.directory"/>
+        </not>
+        <then>
+            <property name="doc.services.directory" value="web" />
+        </then>
+    </if>
+    <if>
+        <not>
+            <isset property="doc.ui.home.url"/>
+        </not>
+        <then>
+            <property name="doc.ui.home.url" value="" />
+        </then>
+    </if>
+    <if>
+        <not>
+            <isset property="doc.nameservice"/>
+        </not>
+        <then>
+            <property name="doc.nameservice" value="" />
+        </then>
+    </if>
+
+
+    <target name="documentation:create"
+            depends="doc:browser, doc:doc, doc:sphinx, doc:api"
+            description="Generate project documentation with PHP Documentor and PHP Code Browser" />
+
+    <!-- PHP Code Browser -->
+    <target name="doc:browser" description="Generating code browser...">
+        <exec command="phpcb -h --source=${dir.src} --output=${dir.docs.phpcb} --log=${dir.docs.phpcb}--extension=xml --exclude=**/map/*,**/om/*" />
+    </target>
+
+    <!-- PHP Documentor -->
+    <target name="doc:doc" description="Generate API documentation.">
+        <echo msg="Generating PHPDoc documentation" />
+        <exec logoutput="true" command="phpdoc run --directory '${dir.src}' --target '${dir.docs.phpdoc}' --ignore '*/Tests/*, */Features/*' --sourcecode --no-interaction" />
+    </target>
+
+    <!-- Generate the RST documentation -->
+    <target name="doc:sphinx"
+            depends="doc:sphinx-sphpdox, doc:sphinx-markdown, doc:sphinx-generator"
+            description="Generate RST documentation" />
+
+    <!-- Generate RST documentation from php files -->
+    <target name="doc:sphinx-sphpdox" description="Generate RST documentation from php files">
+        <echo msg="dox cmd: ${dir.bin}/provisioners/doc/buildDoc.sh '${dir.src}' '${dir.docs.sphinx.source}/src' 'sphpdox'" />
+        <exec command="${dir.bin}/provisioners/doc/buildDoc.sh '${dir.src}' '${dir.docs.sphinx.source}/src' 'sphpdox'" logoutput="true" passthru="true" />
+    </target>
+
+    <!-- Generate html documentation from php files -->
+    <target name="doc:sphinx-sami" description="Generate html documentation from php files">
+        <echo msg="dox cmd: ${dir.bin}/provisioners/doc/buildDoc.sh '${dir.src}' '${dir.docs.sphinx.source}/src' '${doc.nameservice}' 'sami'" />
+        <exec command="${dir.bin}/provisioners/doc/buildDoc.sh '${dir.src}' '${dir.docs.sphinx.source}/src' '${doc.nameservice}' 'sami'" logoutput="true" passthru="true" />
+    </target>
+
+    <!-- Generate RST documentation from markdown -->
+    <target name="doc:sphinx-markdown" description="Generate RST documentation from markdown">
+        <echo msg="dox cmd: ${dir.bin}/provisioners/doc/buildDoc.sh '${dir.doc.pratical}/markdown' '${dir.docs.sphinx.source}/markdown' 'pandoc'" />
+        <exec command="${dir.bin}/provisioners/doc/buildDoc.sh '${dir.doc.pratical}/markdown' '${dir.docs.sphinx.source}/markdown' 'pandoc'" logoutput="true" passthru="true" />
+    </target>
+
+    <!-- Check the syntax of RST documentation -->
+    <target name="doc:sphinx-generator-check-validity" description="Check the syntax of RST documentation">
+        <echo msg="dox cmd: sphinx-build -q -c '${dir.docs.sphinx.conf}' -a -b html '${dir.docs.sphinx.source}' '${project.dir.documentation}'" />
+        <exec command="sphinx-build -q -c '${dir.docs.sphinx.conf}' -a -b html '${dir.docs.sphinx.source}' '${project.dir.documentation}'" logoutput="true" passthru="true" />
+    </target>
+
+    <!-- Generate the syntax of RST index for the documentation's services guide-->
+    <target name="doc:index-guide-doc-generator" description="Generate index for the documentation of services guide">
+        <echo msg="dox cmd: ${dir.bin}/provisioners/doc/create-index.sh '${dir.docs.sphinx.source}/guide/services/${doc.services.directory}/'" />
+        <exec command="${dir.bin}/provisioners/doc/create-index.sh '${dir.docs.sphinx.source}/guide/services/${doc.services.directory}/'" logoutput="false" passthru="true"/>
+    </target>
+
+    <!-- Generate the syntax of RST index for the documentation's services reference-->
+    <target name="doc:index-ref-doc-generator" description="Generate index for the documentation of services reference">
+        <echo msg="dox cmd: ${dir.bin}/provisioners/doc/create-index-reference.sh '${dir.docs.sphinx.source}/reference/${doc.services.directory}/'" />
+        <exec command="${dir.bin}/provisioners/doc/create-index-reference.sh '${dir.docs.sphinx.source}/reference/${doc.services.directory}/'" logoutput="false" passthru="true"/>
+    </target>
+
+    <!-- Generate RST documentation -->
+    <target name="doc:sphinx-generator" description="Generate RST documentation">
+        <echo msg="dox cmd: sphinx-build -c '${dir.docs.sphinx.conf}' -a -b html '${dir.docs.sphinx.source}' '${project.dir.documentation}'" />
+        <exec command="sphinx-build -c '${dir.docs.sphinx.conf}' -a -b html '${dir.docs.sphinx.source}' '${project.dir.documentation}'" logoutput="false" passthru="true" />
+        <echo msg="dox cmd: find '${project.dir.documentation}/*' -type f -exec sed -i  's/UI_HOME_URL/${doc.ui.home.url}/g' {} \;" />
+        <exec command="find '${project.dir.documentation}/*' -type f -exec sed -i  's/UI_HOME_URL/${doc.ui.home.url}/g' {} \;" logoutput="true" passthru="true" />
+    </target>
+
+    <!-- Generate the Api documentation with apigen-->
+    <target name="doc:api"
+            description="Generate API documentation">
+
+        <exec executable="apigen" logoutput="true" passthru="true">
+            <arg line="--source ${dir.src}" />
+            <arg line="--exclude */Features/*" />
+            <arg line="--exclude */Tests/*" />
+            <arg line="--destination ${dir.docs.api}" />
+        </exec>
+
+    </target>
+
+    <!-- Generate the Api documentation with sami-->
+    <target name="doc:sami"
+            description="Generate API documentation">
+
+        <exec executable="sami.phar" logoutput="true" passthru="true">
+            <arg line="--source ${dir.src}" />
+            <arg line="--destination ${dir.docs.api}" />
+        </exec>
+
+    </target>
+</project>

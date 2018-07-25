@@ -1,0 +1,37 @@
+<documentation title="This sniff detects if methods return null">
+    <standard>
+    <![CDATA[
+This sniff detects if  'else' or 'elseif' is used.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: no else condition">
+        <![CDATA[
+class Toto
+{
+    public function getObject(): Object
+    {
+        return new Object();
+    }
+}
+        ]]>
+        </code>
+        <code title="Invalid: else condition whitch can be avoid">
+        <![CDATA[
+class Toto
+{
+    protected $object = null;
+
+    public function getObject($isNew = true): ?Object
+    {
+        if ($isNew) {
+            return new Object();
+        }
+
+        return $this->object;
+    }
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="wait" description="List of database actions" default="database:info" basedir=".">
+
+    <target name="database:info">
+        <echo>This file is a shortcut build for waiting processes to be fully loaded.</echo>
+    </target>
+
+    <target name="wait:database-orm"
+            description="Wait for a specific ORM database to be fully loaded." >
+        <exec command="${dir.bin}/provisioners/wait-database.sh orm" passthru="false" logoutput="true"/>
+    </target>
+    <target name="wait:database-odm"
+            description="Wait for a specific ODM database to be fully loaded." >
+        <exec command="${dir.bin}/provisioners/wait-database.sh odm" passthru="false" logoutput="true"/>
+    </target>
+    <target name="wait:database-couchdb"
+            description="Wait for a specific CouchDB database to be fully loaded." >
+        <exec command="${dir.bin}/provisioners/wait-database.sh couchdb" passthru="false" logoutput="true"/>
+    </target>
+
+    <target name="create:database-orm"
+            description="Create for a specific ORM database to be fully loaded." >
+        <exec command="${dir.bin}/provisioners/create-database.sh orm" passthru="false" logoutput="true"/>
+    </target>
+    <target name="create:database-odm"
+            description="Create for a specific ODM database to be fully loaded." >
+        <exec command="${dir.bin}/provisioners/create-database.sh odm" passthru="false" logoutput="true"/>
+    </target>
+    <target name="create:database-couchdb"
+            description="Create for a specific CouchDB database to be fully loaded." >
+        <exec command="${dir.bin}/provisioners/create-database.sh couchdb" passthru="false" logoutput="true"/>
+    </target>
+
+</project>

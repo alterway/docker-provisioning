@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<ruleset name="PHPStormInspections">
+    <description>Standards that follows some PHP Inspections from PHPStorm.</description>
+</ruleset>

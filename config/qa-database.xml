@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="analysis" description="Php static code analysis build definition" default="analysis:info" basedir=".">
+
+    <target name="analysis:info">
+        <echo>This file contains the central configuration for Php static code analysis</echo>
+    </target>
+
+    <!-- ****************** -->
+    <!-- Project properties -->
+    <!-- ****************** -->
+    <if>
+        <or>
+            <not><isset property="openjdk.driver.path"/></not>
+            <equals arg1="${openjdk.driver.path}" arg2="" />
+        </or>
+        <then><property name="openjdk.driver.path" value="" /></then>
+    </if>
+    <if>
+        <or>
+            <not><isset property="project.dbSchema"/></not>
+            <equals arg1="${project.dbSchema}" arg2="" />
+        </or>
+        <then><property name="project.dbSchema" value="" /></then>
+    </if>
+
+    <!-- DATABASE audit -->
+    <target name="static:schemaspy-mysql" description="Database audit">
+        <!--<exec command="ls -al ${openjdk.driver.path} &amp;&amp; java -jar /usr/local/bin/schemaSpy.jar -dbhelp" logoutput="true"/>-->
+        <exec command="java -jar /usr/local/bin/schemaSpy.jar -t mysql -ahic -dp ${openjdk.driver.path} -host ${project.dbHost} -db ${project.dbName} -u ${project.dbUser} -p ${project.dbPw} -o ${dir.reports.db.schemaspy}" logoutput="true"/>
+    </target>
+    <target name="static:schemaspy-pgsql" description="Database audit">
+        <!--<exec command="ls -al ${openjdk.driver.path} &amp;&amp; java -jar /usr/local/bin/schemaSpy.jar -dbhelp" logoutput="true"/>-->
+        <exec command="java -jar /usr/local/bin/schemaSpy.jar -t pgsql -ahic -dp ${openjdk.driver.path} -host ${project.dbHost} -s ${project.dbSchema} -db ${project.dbName} -u ${project.dbUser} -p ${project.dbPw} -o ${dir.reports.db.schemaspy}" logoutput="true"/>
+    </target>
+
+</project>

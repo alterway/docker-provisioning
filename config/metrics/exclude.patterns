@@ -1,0 +1,8 @@
+**/Resources/**
+**/Tests/**
+**/Test/**
+**/Entity/**
+**/Features/**
+**/features/**
+**/DataFixtures/**
+**/*Bundle.php

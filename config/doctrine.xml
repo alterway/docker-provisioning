@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="doctrine" description="Frontend build" default="doctrine:info" basedir=".">
+
+    <target name="doctrine:info">
+        <echo>This is a set of tools for doctrine managment</echo>
+    </target>
+
+    <!-- ****************** -->
+    <!-- Project properties -->
+    <!-- ****************** -->
+    <property name="real.sfynx.migration.options" value="" />
+    <if>
+        <isset property="sfynx.migration.options"/>
+        <then><property name="real.sfynx.migration.options" value="${sfynx.migration.options}" override="true" /></then>
+    </if>
+
+
+    <target name="doctrine:build" depends="doctrine:create" description="Update doctrine class, and pass migration if needed">
+        <if>
+            <not>
+                <equals arg1="${app.return.create}" arg2="0"/>
+            </not>
+            <then>
+                <echo>... we test updated doctrine database </echo>
+                <phingCall target="doctrine:update"/>
+            </then>
+            <else>
+                <echo>... we rebuild doctrine database </echo>
+                <phingCall target="doctrine:rebuild"/>
+            </else>
+        </if>
+    </target>
+
+    <target name="doctrine:update-test" depends="doctrine:update" description="Update doctrine class, and pass migration if needed">
+        <if>
+            <not>
+                <equals arg1="${app.return.update}" arg2="0"/>
+            </not>
+            <then>
+                <echo>... we rebuild doctrine database </echo>
+                <phingCall target="doctrine:rebuild"/>
+            </then>
+        </if>
+    </target>
+
+    <target name="doctrine:update" description="Update doctrine tables">
+        <echo>... we update schemas in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} mysql host</echo>
+        <if>
+            <equals arg1="${project.dbDriver}" arg2="orm" />
+            <then>
+                <exec executable="php" passthru="false" returnProperty="app.return.update" logoutput="true">
+                    <arg line="app/console" />
+                    <arg line="doctrine:schema:update" />
+                    <arg line="--force" />
+                    <arg line="--env=${project.env.sf}" />
+                    <arg line="--no-interaction" />
+                </exec>
+            </then>
+        </if>
+    </target>
+
+    <target name="doctrine:rebuild"
+            description="Rebuilds doctrine completely"
+            depends="doctrine:fixtures-with-truncate"
+    />
+
+    <target name="doctrine:drop">
+        <echo>... we drop all tables of the database in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="true" logoutput="true">
+            <arg line="app/console" />
+            <arg line="sfynx:tables:drop" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+        </exec>
+    </target>
+
+    <target name="doctrine:create" description="Create doctrine tables">
+        <echo>... we create schemas in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <if>
+            <equals arg1="${project.dbDriver}" arg2="orm" />
+            <then>
+                <exec executable="php" passthru="false" returnProperty="app.return.create" logoutput="false">
+                    <arg line="app/console" />
+                    <arg line="doctrine:schema:create" />
+                    <arg line="--env=${project.env.sf}" />
+                    <arg line="--no-interaction" />
+                </exec>
+            </then>
+            <elseif>
+                <equals arg1="${project.dbDriver}" arg2="couchdb" />
+                <then>
+                    <exec command="${dir.bin}/couchdb/couchdb-create-db.sh ${project.dbName} ${project.dbUser} ${project.dbPw} ${project.dbHost} ${project.dbPort}" logoutput="true"/>
+                </then>
+            </elseif>
+        </if>
+    </target>
+
+    <target name="doctrine:fixtures">
+        <echo>... we insert fixtures in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="false">
+            <arg line="app/console" />
+            <arg line="doctrine:fixtures:load" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+        </exec>
+    </target>
+
+    <target name="doctrine:fixtures-with-truncate">
+        <echo>... we insert fixtures in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="false">
+            <arg line="app/console" />
+            <arg line="doctrine:fixtures:load" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+            <arg line="--purge-with-truncate" />
+        </exec>
+    </target>
+
+    <target name="doctrine:fixtures-with-append">
+        <echo>... we insert fixtures in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="false">
+            <arg line="app/console" />
+            <arg line="doctrine:fixtures:load" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+        </exec>
+    </target>
+
+    <target name="doctrine:migrations-migrate" description="Execute doctrine migrations">
+        <echo>... we execute doctrine migration in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="doctrine:migrations:migrate" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+        </exec>
+    </target>
+
+    <target name="sfynx:migrations-migrate" description="Execute doctrine migrations">
+        <echo>... we execute sfynx migration in ${project.env.sf} environment with ${real.sfynx.migration.options} options</echo>
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="sfynx:migration ${real.sfynx.migration.options}" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+        </exec>
+    </target>
+
+    <target name="doctrine:mapping-convert" description="Execute doctrine migrations">
+        <echo>... we execute doctrine mapping convert in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="doctrine:mapping:convert" />
+            <arg line="yml" />
+        </exec>
+    </target>
+
+    <target name="doctrine:cache-clear-metadata" description="Clear metadata">
+        <echo>... we execute doctrine clear metadata in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="doctrine:cache:clear-metadata" />
+            <arg line="--env=${project.env.sf}" />
+        </exec>
+    </target>
+
+    <target name="doctrine:cache-clear-query" description="Clear query">
+        <echo>... we execute doctrine clear metadata in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="doctrine:cache:clear-query" />
+            <arg line="--env=${project.env.sf}" />
+        </exec>
+    </target>
+
+    <target name="doctrine:cache-clear-result" description="Clear result">
+        <echo>... we execute doctrine clear metadata in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="doctrine:cache:clear-result" />
+            <arg line="--env=${project.env.sf}" />
+        </exec>
+    </target>
+
+</project>

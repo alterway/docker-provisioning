@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="analysis" description="Php static code analysis build definition" default="analysis:info" basedir=".">
+
+    <target name="qa-security:info">
+        <echo>This file contains the central configuration for Php static code security analysis</echo>
+    </target>
+
+    <!-- PHP Security -->
+    <target name="static:security-rats" depends="static:metrics-script" description="Raise security leaks using the tool RATS (Rough Auditing Tool for Security).">
+        <echo msg="Security general: Raise security leaks using the tool RATS (Rough Auditing Tool for Security)." />
+        <exec command="rats --html --quiet ${dir.src} > ${dir.reports}/security-rats.html" />
+        <exec command="rats ${dir.src} > ${dir.reports}/security-rats.log" />
+    </target>
+    <target name="static:security-psecio-parse" description="Raise security leaks about code issues.">
+        <echo msg="Security parse: Raise security leaks about code issues." />
+        <exec command="psecio-parse scan --format=xml ${dir.src} > ${dir.reports}/security-parse.xml" />
+        <exec command="psecio-parse scan ${dir.src} > ${dir.reports}/security-parse.log" logoutput="true"/>
+    </target>
+    <target name="static:security-graudit" description="Use graudit to check security points.">
+        <echo msg="Use graudit to check security points." />
+        <exec command="graudit -z ${dir.src} > ${dir.reports}/security-graudit.log" logoutput="true"/>
+    </target>
+    <target name="static:security-checker" description="Raise security leaks about dependencies installed through composer.">
+        <echo msg="Security checker: Raise security leaks about dependencies installed through composer." />
+        <exec command="php-security-checker security:check composer.lock > ${dir.reports}/security-checker.log" logoutput="true"/>
+    </target>
+    <target name="static:security-iniscan" description="Raise leaks about php.ini configuration file.">
+        <echo msg="Security PHP: raise leaks about php.ini configuration file." />
+        <exec command="iniscan scan --format=xml --output=${dir.reports}/security-iniscan.xml   --path=$(echo $(php -i | grep 'Loaded Configuration File') | sed -e 's/Loaded Configuration File => //g')" logoutput="false"/>
+        <exec command="iniscan scan --format=html --output=${dir.reports}/security-iniscan.html --path=$(echo $(php -i | grep 'Loaded Configuration File') | sed -e 's/Loaded Configuration File => //g')" logoutput="false"/>
+    </target>
+    <target name="static:security-versionscan" description="Raise leaks about the PHP version used.">
+        <echo msg="Security PHP: raise leaks about the PHP version used." />
+        <exec command="versionscan scan --sort=risk  > ${dir.reports}/security-versionscan.log" logoutput="true"/>
+    </target>
+
+
+</project>

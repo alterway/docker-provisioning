@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="analysis" description="Php static code analysis build definition" default="analysis:info" basedir=".">
+
+    <target name="qa-dashboard:info">
+        <echo>This file contains the central configuration for generation of metrics dashboard</echo>
+    </target>
+
+    <target name="dashboard:snapshot-v1" description="Construct a dashboard by grouping all results of built analysis metrics.">
+        <echo msg="Construct the dashboard." />
+        <echo msg="php -f ${dir.dashboard}/snapshot-v1/dashboard.php pathsrc=${dir.src} pathlog=${dir.reports}" />
+        <exec command="php -f ${dir.dashboard}/snapshot-v1/dashboard.php pathsrc=${dir.src} pathlog=${dir.reports}" logoutput="true"/>
+    </target>
+
+
+    <target name="dashboard:snapshot-v2" description="Construct a dashboard by grouping all results of built analysis metrics.">
+        <echo msg="Construct the dashboard." />
+        <echo msg="php -f ${dir.dashboard}/snapshot-v2/dashboard.php buildrelease=${buildrelease} service=${project.env.sf} pathlog=${dir.reports}" />
+        <exec command="php -f ${dir.dashboard}/snapshot-v2/dashboard.php
+                buildrelease=${buildrelease}
+                service=${project.env.sf}
+                pathlog=${dir.reports}"
+              logoutput="true"/>
+    </target>
+
+</project>
