@@ -1,0 +1,2 @@
+#(^|.*/)(Resources|Tests?|Entity|Features|DataFixtures)/.*#
+#Bundle\.php$#

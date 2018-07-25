@@ -1,0 +1,56 @@
+<documentation title="Maximum number of lines by class">
+    <standard>
+        <![CDATA[
+This sniff oblige file to have less than lines
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: less than 16">
+            <![CDATA[
+<?php
+declare(strict_types = 1);
+
+namespace Test;
+
+class Test
+{
+    /**
+     * @return int
+     */
+    public function testFunction()
+    {
+        return 5;
+    }
+}
+        ]]>
+        </code>
+        <code title="Invalid: More than 16">
+            <![CDATA[
+<?php
+declare(strict_types = 1);
+
+namespace Test;
+
+class Test
+{
+    /**
+     * @return int
+     */
+    public function testFunction()
+    {
+        return 5;
+    }
+
+    /**
+     * @return int
+     */
+    public function answerToTheUniversalQuestion()
+    {
+        return 42;
+    }
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>
+

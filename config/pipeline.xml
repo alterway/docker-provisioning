@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="pipeline" description="Pipeline worflow" default="pipeline:info" basedir=".">
+
+    <target name="pipeline:info">
+        <echo>This file contains all tasks used for a symfony2 project for CI with Jenkins, gitlab-ci or local build</echo>
+        <echo>You can launch:</echo>
+    </target>
+
+    <target name="prepare:artifact-project"
+            depends="prepare:folders, prepare:configuration, frontend:assets, prepare:clean, prepare:warmup"
+            description="Create dev environment from the scratch" />
+    <target name="prepare:artifact-analyse"
+            depends="prepare:folders, prepare:clean-oldbuild"
+            description="Create dev environment from the scratch" />
+
+    <target name="prepare:composer-update"
+            depends="composer:self, composer:update, composer:dump"
+            description="Create dev environment from the scratch" />
+
+    <target name="prepare:composer-install"
+            depends="composer:self, composer:install, composer:dump"
+            description="Create dev environment from the scratch" />
+
+    <target name="prepare:composer-require"
+            depends="composer:self, composer:require, composer:dump"
+            description="Create dev environment from the scratch" />
+
+    <target name="prepare:initialize"
+            depends="doctrine:create, doctrine:fixtures-with-append, sfynx:migrations-migrate"
+            description="Create dev environment from the scratch" />
+    <target name="prepare:initialize-test"
+            depends="doctrine:create, doctrine:fixtures-with-append, sfynx:migrations-migrate"
+            description="Create dev environment from the scratch" />
+    <target name="prepare:persistence"
+            depends="doctrine:cache-clear-metadata, doctrine:cache-clear-query, doctrine:cache-clear-result, doctrine:build, sfynx:migrations-migrate"
+            description="Update dev environment from the scratch" />
+
+    <target name="verify:normal"
+            depends="verify:smoke"
+            description="Rebuild dev environment from the scratch" />
+
+    <target name="verify:recette"
+            depends="verify:smoke, verify:sanity"
+            description="Rebuild dev environment from the scratch" />
+
+    <target name="functional:unit"
+            depends="unit:unit"
+            description="Runs all phpunit tests or those specified with a given group through property 'phpunit.group'." />
+
+    <target name="functional:system"
+            depends="system:behat-chrome, system:behat-firefox, system:behat-phantomjs"
+            description="Launch behat tests" />
+
+    <target name="analyse:quick"
+            depends="static:quick, documentation:create"
+            description="Generate default metrcis and documentation" />
+    <target name="analyse:normal"
+            depends="static:all, documentation:create"
+            description="Generate all metrics and documentation" />
+
+    <target name="load-quick"
+            depends="performance:quick"
+            description="Launch quick performance tests" />
+    <target name="load-stress"
+            depends="performance:stress"
+            description="Launch normal performance tests" />
+
+</project>
+
+

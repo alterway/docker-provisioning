@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="analysis" description="Php static code analysis build definition" default="analysis:info" basedir=".">
+
+    <target name="analysis:info">
+        <echo>This file contains the central configuration for Php static code analysis</echo>
+    </target>
+
+    <!-- ****************** -->
+    <!-- Project properties -->
+    <!-- ****************** -->
+    <property name="real.phpcs.ruleset.xml" value="${dir.metrics}/phpcs/ruleset.xml" />
+    <if>
+        <isset property="phpcs.ruleset.xml"/>
+        <then><property name="real.phpcs.ruleset.xml" value="${phpcs.ruleset.xml}" override="true" /></then>
+    </if>
+
+    <property name="real.phpcs.errors" value="0" />
+    <if>
+        <isset property="phpcs.errors"/>
+        <then><property name="real.phpcs.errors" value="${phpcs.errors}" override="true" /></then>
+    </if>
+
+    <property name="real.phpcs.warnings" value="20" />
+    <if>
+        <isset property="phpcs.warnings"/>
+        <then><property name="real.phpcs.warnings" value="${phpcs.warnings}" override="true" /></then>
+    </if>
+
+    <property name="real.phpcs.width" value="109" />
+    <if>
+        <isset property="phpcs.width"/>
+        <then><property name="real.phpcs.width" value="${phpcs.width}" override="true" /></then>
+    </if>
+
+    <property name="real.phpcpd.min.lines" value="5" />
+    <if>
+        <isset property="phpcpd.min.lines"/>
+        <then><property name="real.phpcpd.min.lines" value="${phpcpd.min.lines}" override="true" /></then>
+    </if>
+
+    <property name="real.phpcpd.min.tokens" value="70" />
+    <if>
+        <isset property="phpcpd.min.tokens"/>
+        <then><property name="real.phpcpd.min.tokens" value="${phpcpd.min.tokens}" override="true" /></then>
+    </if>
+
+    <if>
+        <or>
+            <not><isset property="list.commit.files"/></not>
+            <equals arg1="${list.commit.files}" arg2="" />
+        </or>
+        <then>
+            <exec outputProperty="find.analyse.list.commit.files" command="find ${project.basedir}/${dir.src} -name '*.php' -type f |tr '\n' ' ' " logoutput="false"/>
+            <property name="analyse.list.commit.files" value="${find.analyse.list.commit.files}" />
+        </then>
+
+    </if>
+    <if>
+        <isset property="list.commit.files"/>
+        <then>
+            <property name="oldproperty" value="${list.commit.files}"/>
+            <property name="analyse.list.commit.files" value="${oldproperty}">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="www" replace="${project.basedir}" ignoreCase="true"/>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+
+    <!-- Run all static parallel tasks -->
+    <target name="run_parallel_tasks_static_all">
+        <parallel threadCount="${threads}">
+            <phingcall target="tasks_to_try_static_all" />
+        </parallel>
+    </target>
+    <target name="run_serial_tasks_static_all">
+        <phingcall target="tasks_to_try_static_all" />
+    </target>
+    <target name="tasks_to_try_static_all">
+        <phingcall target="static:cpd" />
+        <phingcall target="static:md" />
+        <phingcall target="static:cs" />
+        <phingcall target="static:pdepend" />
+        <phingcall target="static:loc" />
+        <phingcall target="static:phpmetrics" />
+    </target>
+    <target name="static:all" description="Run the phpmetrics, pdepend, phpmd, phpcpd and phploc tasks. Checks for parallel support in PHP.">
+        <exec command="php -m | grep pcntl" returnProperty="pcntl_enabled"/>
+        <if>
+            <equals arg1="${pcntl_enabled}" arg2="pcntl" />
+            <then>
+                <echo message="PCNTL Enabled. Running Taks in parallel with ${threads} threads." />
+                <phingcall target="run_parallel_tasks_static_all"/>
+            </then>
+            <else>
+                <echo message="PCNTL is not enabled. Running task serially." />
+                <phingcall target="run_serial_tasks_static_all"/>
+            </else>
+        </if>
+    </target>
+
+    <!-- Run quick static parallel tasks -->
+    <target name="run_parallel_tasks_static_quick">
+        <parallel threadCount="${threads}">
+            <phingcall target="tasks_to_try_static_quick" />
+        </parallel>
+    </target>
+    <target name="run_serial_tasks_static_quick">
+        <phingcall target="tasks_to_try_static_quick" />
+    </target>
+    <target name="tasks_to_try_static_quick">
+        <phingcall target="static:cpd" />
+        <phingcall target="static:md" />
+        <phingcall target="static:cs" />
+    </target>
+    <target name="static:quick" description="Run the phpmd, phpcpd, and pdepend tasks. Checks for parallel support in PHP.">
+        <exec command="php -m | grep pcntl" returnProperty="pcntl_enabled"/>
+        <if>
+            <equals arg1="${pcntl_enabled}" arg2="pcntl" />
+            <then>
+                <echo message="PCNTL Enabled. Running Taks in parallel with ${threads} threads." />
+                <phingcall target="run_parallel_tasks_static_quick"/>
+            </then>
+            <else>
+                <echo message="PCNTL is not enabled. Running task serially." />
+                <phingcall target="run_serial_tasks_static_quick"/>
+            </else>
+        </if>
+    </target>
+
+    <!-- PHP Copy/Paste Detector-->
+    <target name="static:cpd" description="Statics similar code blocks.">
+        <echo msg="Statics similar code blocks." />
+        <!-- Random analysis file number to detect easily if reports have been generated due to cpd reports. -->
+        <exec command="echo $RANDOM" outputProperty="random" />
+        <echo msg="Command: phpcpd --min-tokens=70 --min-lines=5 --regexps-exclude=$(cat '${dir.metrics}/exclude.phpcpd.patterns' |tr '\n' ',') --log-pmd ${dir.reports.phpcpd}/php-cpd-${random}.xml ${dir.src}" />
+        <exec outputProperty="phpcpd.system.report"
+              command="
+                phpcpd
+                --min-tokens=${real.phpcpd.min.tokens}
+                --min-lines=${real.phpcpd.min.lines}
+                --regexps-exclude=$(cat '${dir.metrics}/exclude.phpcpd.patterns' |tr '\n' ',')
+                --log-pmd
+                ${dir.reports.phpcpd}/php-cpd-${random}.xml
+                ${dir.src}"
+              escape="false"/>
+        <echo msg="${line.separator}${phpcpd.system.report}" />
+        <exec command="if [ -f '${dir.reports.phpcpd}/php-cpd-${random}.xml' ]; then echo 'true'; else echo 'false'; fi;" outputProperty="output.phpcpdFileExists" />
+        <if>
+            <equals arg1="${output.phpcpdFileExists}" arg2="true" />
+            <then>
+                <echo msg="Some copy-paste detected."/>
+                <exec command="mv ${dir.reports.phpcpd}/php-cpd-${random}.xml ${dir.reports.phpcpd}/php-cpd.xml" />
+                <exec command="echo '${phpcpd.system.report}' | grep -P '[0-9.]+%(?= duplicated lines out)' -o > ${dir.reports.phpcpd}/percentage-report.txt" />
+            </then>
+            <else>
+                <echo msg="No copy-paste detected."/>
+                <exec command="echo '' > ${dir.reports.phpcpd}/php-cpd.xml" />
+                <exec command="echo '0.00%' > ${dir.reports.phpcpd}/percentage-report.txt" />
+            </else>
+        </if>
+    </target>
+
+    <!-- PHP Dead Code Detection (code static mort)-->
+    <target name="static:dcd" description="statics similar code blocks.">
+        <echo msg="Code static mort ... dans ${dir.src}" />
+        <exec command="phpdcd ${dir.src} > ${dir.reports.phpdcd}/phpdcd.log" passthru="false" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.phpdcd}/phpdcd.log" passthru="false" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+
+    <!-- Php code sniffer -->
+    <!--TODO PHPCS targets can be variableized to manage different standards on the same target.-->
+    <target name="static:cs-psr2" description="fixes statics coding standard.">
+        <echo msg="staticing coding standard with PSR2 ... in ${dir.src}" />
+        <exec command="phpcs
+            --standard=PSR2
+            ${dir.src}
+            --ignore=$(cat '${dir.metrics}/exclude.phpcs.patterns' |tr '\n' ',')
+            --extensions=php
+            --encoding=utf-8
+            --report-csv=${dir.reports.phpcs}/psr2-cs-file.csv
+            --report-xml=${dir.reports.phpcs}/psr2-cs-file.xml
+            --report-json=${dir.reports.phpcs}/psr2-cs-file.json
+            --report-summary=${dir.reports.phpcs}/psr2-cs-file-summary.txt
+            --report-width=${real.phpcs.width}"
+              logoutput="true"/>
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.phpcs}/ruleset-cs-file-summary.txt" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:cs-symfony" description="fixes statics coding standard.">
+        <echo msg="staticing coding standard with PSR2 ... in ${dir.src}" />
+        <exec command="phpcs
+            --standard=Symfony2
+            ${dir.src}
+            --ignore=$(cat '${dir.metrics}/exclude.phpcs.patterns' |tr '\n' ',')
+            --extensions=php
+            --encoding=utf-8
+            --colors
+            --report=full
+            --report-csv=${dir.reports.phpcs}/symfony2-cs-file.csv
+            --report-xml=${dir.reports.phpcs}/symfony2-cs-file.xml
+            --report-json=${dir.reports.phpcs}/symfony2-cs-file.json
+            --report-summary=${dir.reports.phpcs}/symfony2-cs-file-summary.txt
+            --report-width=${real.phpcs.width}"
+              logoutput="true"/>
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.phpcs}/ruleset-cs-file-summary.txt" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:cs-zend" description="fixes statics coding standard.">
+        <echo msg="staticing coding standard with PSR2 ... in ${dir.src}" />
+        <exec command="phpcs
+            --standard=Zend
+            ${dir.src}
+            --ignore=$(cat '${dir.metrics}/exclude.phpcs.patterns' |tr '\n' ',')
+            --extensions=php
+            --encoding=utf-8
+            --colors
+            --report=full
+            --report-csv=${dir.reports.phpcs}/zend-cs-file.csv
+            --report-xml=${dir.reports.phpcs}/zend-cs-file.xml
+            --report-json=${dir.reports.phpcs}/zend-cs-file.json
+            --report-summary=${dir.reports.phpcs}/zend-cs-file-summary.txt
+            --report-width=${real.phpcs.width}"
+              logoutput="true"/>
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.phpcs}/ruleset-cs-file-summary.txt" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:cs" description="Run report of PHP Code Sniffer">
+        <echo msg="Making static coding standard with checkstyle ... in ${dir.build} with ${real.phpcs.ruleset.xml} rulesets" />
+        <exec command="phpcs
+            --standard=${real.phpcs.ruleset.xml}
+            ${dir.src}
+            --ignore=$(cat '${dir.metrics}/exclude.phpcs.patterns' |tr '\n' ',')
+            --extensions=php
+            --encoding=utf-8
+            --colors
+            --report=full
+            --report-csv=${dir.reports.phpcs}/ruleset-cs-file.csv
+            --report-xml=${dir.reports.phpcs}/ruleset-cs-file.xml
+            --report-json=${dir.reports.phpcs}/ruleset-cs-file.json
+            --report-summary=${dir.reports.phpcs}/ruleset-cs-file-summary.txt
+            --report-width=${real.phpcs.width}"
+              logoutput="true"/>
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.phpcs}/ruleset-cs-file-summary.txt" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:cs-summary" description="Run summary report of PHP Code Sniffer with files ${analyse.list.commit.files}... in ${dir.build}">
+        <echo msg="Making static coding standard summary with checkstyle ... in ${dir.build}" />
+        <!-- Set list of files in file to avoid process fork error. -->
+        <exec command="echo $RANDOM" outputProperty="random" />
+        <echo msg="${analyse.list.commit.files}" file="phpcs.files.list.${random}.txt" />
+        <exec command="sed -i 's/ /\n/g' phpcs.files.list.${random}.txt" />
+        <exec
+                outputProperty="app.return.php_code_summary"
+                command="phpcs
+                --file-list=phpcs.files.list.${random}.txt
+                --ignore=$(cat '${dir.metrics}/exclude.phpcs.patterns' |tr '\n' ',')
+                --extensions=php
+                --encoding=utf-8
+                --colors
+                --report=summary
+                --report-xml=${dir.reports.phpcs}/report.xml
+                --report-json=${dir.reports.phpcs}/report.json
+                --report-width=${real.phpcs.width}
+                "
+                logoutput="true"
+                returnProperty="phpcsReturn"/>
+        <delete file="phpcs.files.list.${random}.txt" />
+        <if>
+            <not><equals arg1="${phpcsReturn}" arg2="0"/></not>
+            <then>
+                <exec outputProperty="app.return.php_code_summary"  command="echo '${app.return.php_code_summary}' |grep 'A TOTAL OF'" logoutput="false"/>
+                <exec outputProperty="app.return.php_code_errors"   command="echo '${app.return.php_code_summary}' |grep -P '\d+ (?=ERROR)' -o " logoutput="false"/>
+                <exec outputProperty="app.return.php_code_warnings" command="echo '${app.return.php_code_summary}' |grep -P '\d+ (?=WARNING)' -o " logoutput="false"/>
+
+                <if>
+                    <versioncompare version="${app.return.php_code_errors}" desiredVersion="${phpcs.errors}" operator="gt" />
+                    <then>
+                        <echo msg="A total of ${app.return.php_code_errors} errors were found. Only ${phpcs.errors} are accepted." />
+                    </then>
+                    <else>
+                        <echo msg="A total of ${app.return.php_code_errors} errors were found." />
+                    </else>
+                </if>
+                <if>
+                    <versioncompare version="${app.return.php_code_warnings}" desiredVersion="${real.phpcs.warnings}" operator="gt" />
+                    <then>
+                        <echo msg="A total of ${app.return.php_code_warnings} warnings were found. Only ${real.phpcs.warnings} are accepted." />
+                    </then>
+                    <else>
+                        <echo msg="A total of ${app.return.php_code_warnings} warnings were found." />
+                    </else>
+                </if>
+            </then>
+            <else>
+                <echo msg="PHPCS: No error found."/>
+                <echo msg="A total of 0 error were found." />
+                <echo msg="A total of 0 warning were found." />
+            </else>
+        </if>
+    </target>
+
+    <!-- PHP Loc -->
+    <target name="static:loc" description="A tool for quickly measuring the size of a PHP project.">
+        <echo msg="Nombre de ligne, de classses, d'interfaces, de méthodes, complexité cyclomatique  ... dans ${dir.src}" />
+        <exec command='phploc ${dir.src} --count-tests --log-xml="${dir.reports}/phploc.xml" --log-csv="${dir.reports}/phploc.csv" --names=*.php --exclude Resources --exclude Tests --exclude Test --exclude Entity --exclude Features --exclude DataFixtures' passthru="false" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports}/phploc.xml" passthru="false" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+
+    <!-- PHP Mess Detector -->
+    <target name="static:md" description="Metrics from php code">
+        <echo msg="Anomalies directes, complexité cyclomatique=nombre de chemins indépendants d’un programme, fonctions à risque, code mort ... dans ${dir.src}" />
+        <exec command="cat '${dir.metrics}/exclude.patterns' |tr '\n' ','" logoutput="true"/>
+        <exec command="phpmd  ${dir.src} xml ${dir.metrics}/phpmd.xml --exclude $(cat '${dir.metrics}/exclude.patterns' |tr '\n' ',') --suffixes php --reportfile-xml ${dir.reports}/phpmd.xml --reportfile-html ${dir.reports}/phpmd.html" passthru="false" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports}/phpmd.xml" passthru="false" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:md-specific" description="Metrics from php code.">
+        <echo msg="Anomalies directes, complexité cyclomatique=nombre de chemins indépendants d’un programme, fonctions à risque, code mort ... dans ${dir.src}" />
+        <exec command="phpmd  ${dir.src} xml cleancode,codesize,controversial,design,naming,unusedcode --exclude $(cat '${dir.metrics}/exclude.patterns' |tr '\n' ',') --suffixes php --reportfile-xml ${dir.reports}/phpmd.xml --reportfile-html ${dir.reports}/phpmd.html" passthru="false" logoutput="true"/>
+    </target>
+
+    <!-- PHP Depend -->
+    <target name="static:pdepend" description="Execute the command pdepend">
+        <echo msg="Look https://pdepend.org/ for more infomration." />
+        <echo msg="Command:
+            pdepend
+            --ignore=$(cat '${dir.metrics}/exclude.patterns' |tr '\n' ',' |sed 's/\*\*//g' | rev | cut -c 2- | rev)
+            --summary-xml=${dir.reports.pdepend}/pdepend-summary.xml
+            --jdepend-xml=${dir.reports.pdepend}/pdepend.xml
+            --jdepend-chart=${dir.reports.pdepend}/dependencies.svg
+            --overview-pyramid=${dir.reports.pdepend}/overview-pyramid.svg
+            ${dir.src}" />
+        <exec command="
+            pdepend
+            --ignore=$(cat '${dir.metrics}/exclude.patterns' |tr '\n' ',' |sed 's/\*\*//g' | rev | cut -c 2- | rev)
+            --summary-xml=${dir.reports.pdepend}/pdepend-summary.xml
+            --jdepend-xml=${dir.reports.pdepend}/pdepend.xml
+            --jdepend-chart=${dir.reports.pdepend}/dependencies.svg
+            --overview-pyramid=${dir.reports.pdepend}/overview-pyramid.svg
+            ${dir.src}" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.pdepend}/pdepend.xml" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+
+    <!-- Sonar -->
+    <target name="sonar:runner" description="Execute sonnarQube.">
+        <echo msg="PHP metrics project with Sonar Qube" />
+        <exec command='sonar-runner' passthru="false" />
+    </target>
+
+    <!-- PHP Metrics -->
+    <target name="static:phpmetrics" depends="static:metrics-script" description="Execute PHPMetrics tool.">
+        <echo msg="Execute PHPMetrics tool." />
+        <!-- TODO: change this command to use the PHPMetrics v2 from GitLab. -->
+        <exec command="cp -R ${dir.src} /tmp/source/ &amp;&amp; ls -al /tmp/source/ &amp;&amp;
+                phpmetrics -q
+                --offline
+                --plugins=/usr/local/bin/symfony-extension.phar
+                /tmp/source/
+                --excluded-dirs=$(cat '${dir.metrics}/exclude.patterns' |tr '\n' '|' |sed 's/\*\*//g' | rev | cut -c 2- | rev)
+                --chart-bubbles=${dir.reports}/phpmetrics.svg
+                --report-html=${dir.reports}/phpmetrics.html
+                --report-xml=${dir.reports}/phpmetrics.xml
+                --report-json=${dir.reports}/phpmetrics.json
+                --config=${dir.metrics}/phpmetrics.yml" passthru="true" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <!-- TODO: change this command to use the PHPMetrics v2 from GitLab. -->
+                <exec command="cat ${dir.reports}/phpmetrics.xml" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:phpmetrics2" depends="static:metrics-script" description="Execute PHPMetrics tool.">
+        <echo msg="Execute PHPMetrics tool." />
+        <!-- TODO: change this command to use the PHPMetrics v2 from GitLab. -->
+        <exec command="cp -R ${dir.src} /tmp/source/ &amp;&amp; ls -al /tmp/source/ &amp;&amp;
+            phpmetrics2 /tmp/source/
+            --excluded-dirs=$(cat '${dir.metrics}/exclude.patterns' |tr '\n' '|' |sed 's/\*\*//g' | rev | cut -c 2- | rev)
+            --report-html=${dir.reports}/phpmetrics
+            --report-violations=${dir.reports}/phpmetrics.violation.xml" passthru="true" />
+        <exec command="cp ${dir.reports.phpmetrics}/js/latest.json  ${dir.reports}/phpmetrics-resume.json" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <!-- TODO: change this command to use the PHPMetrics v2 from GitLab. -->
+                <exec command="cat ${dir.reports}/phpmetrics-resume.json" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="static:metrics-script" description="Execute we do not know what from PHPMetrics.">
+        <echo msg="Execute we do not know what from PHPMetrics." />
+        <exec command="chmod -R 0777 ${dir.bin}/provisioners/metrics/metrics.sh" escape="false" />
+        <exec command="${dir.bin}/provisioners/metrics/metrics.sh ${dir.src} > ${dir.reports}/metrics.txt" />
+        <echo msg="cmd: find ${dir.src} -name '*.php' -exec ${dir.bin}/provisioners/metrics/encoding.sh {} \" />
+        <exec command="find ${dir.src} -name '*.php' -exec ${dir.bin}/provisioners/metrics/encoding.sh {} \; > ${dir.reports}/encoding.txt" passthru="false"/>
+    </target>
+
+    <!-- PHP Storm inspection https://www.jetbrains.com/phpstorm/help/working-with-phpstorm-features-from-command-line.html -->
+    <target name="static:phpstorm" description="Execute phpStorm inspection.">
+        <echo msg="PHP metrics project with phpStorm : ./home/etienne/PhpStorm/bin/inspect.sh ${project.basedir} ./app/phpstorm.inspection.xml ${dir.reports.phpstorm.inspection} -v2 -d ${dir.src}" />
+        <exec command='${dir.phpstorm.bin}/inspect.sh ${project.basedir} ./app/phpstorm.inspection.xml ${dir.reports.phpstorm.inspection} -v2 -d ${dir.src}' passthru="false"/>
+    </target>
+
+    <!--https://github.com/mre/awesome-static-analysis/blob/master/README.md-->
+    <!-- PHP Dependency Analysis https://github.com/mamuz/PhpDependencyAnalysis/wiki/3.-Configuration-->
+    <target name="static:da" description="Execute PHP metrics">
+        <echo msg="PHP Dependency Analysis project ... dans ${dir.src}" />
+        <!--<exec command="phpda help list" passthru="true"  logoutput="true"/>-->
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-1.yml --mode usage --source ${dir.src} --filePattern '*.php'  --ignore 'PresentationBundle,InfrastructureBundle'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-4-global.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-2.yml --mode usage --source ${dir.src} --filePattern '*.php'  --ignore 'PresentationBundle,InfrastructureBundle'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-3-global.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-3.yml --mode usage --source ${dir.src} --filePattern '*.php'  --ignore 'PresentationBundle,InfrastructureBundle'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-2-global.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-3.yml --mode usage --source ${dir.src}/Presentation --filePattern '*.php'  --ignore 'test'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-2a-presentation.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-3.yml --mode usage --source ${dir.src}/Application --filePattern '*.php'  --ignore 'test'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-2b-application.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-3.yml --mode usage --source ${dir.src}/Domain --filePattern '*.php'  --ignore 'test'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-2c-domain.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-3.yml --mode usage --source ${dir.src}/Infrastructure --filePattern '*.php'  --ignore 'PresentationBundle,InfrastructureBundle'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-2d-infrastructure.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-4-niv1.yml --mode usage --source ${dir.src} --filePattern '*.php'  --ignore 'PresentationBundle,InfrastructureBundle'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-1-diagr-package-niv1.svg' " passthru="true" />
+        <exec command="phpda analyze ${dir.metrics}/phpda/phpda-4-niv2.yml --mode usage --source ${dir.src} --filePattern '*.php'  --ignore 'PresentationBundle,InfrastructureBundle'  --formatter 'PhpDA\Writer\Strategy\Svg' --target '${dir.reports.uml}/da-uml-1-diagr-package-niv2.svg' " passthru="true" />
+    </target>
+
+    <!-- PHP Static Analysis https://github.com/ovr/phpsa -->
+    <target name="static:sa" description="Execute the PHP Static Analysis.">
+        <echo msg="Execute the PHP Static Analysis. Rulsets: https://github.com/ovr/phpsa/blob/master/docs/05_Analyzers.md" />
+        <exec command="phpsa check ${dir.src} > ${dir.reports}/phpsa.log" passthru="true" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports}/phpsa.log" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+
+    <!-- DIACENTER -->
+
+    <!-- AUTODIA -->
+    <target name="static:autodia" description="Class diagram UML generator.">
+        <echo msg="Class diagram uml." />
+        <echo msg="perl /usr/local/bin/autodia.pl -l php -d ${dir.src}/Presentation -r -o ${dir.reports.diacenter.autodia}/actor.presentation.dia" />
+        <exec command="perl /usr/local/bin/autodia.pl -l php -d ${dir.src}/Presentation -r -o ${dir.reports.diacenter.autodia}/actor.presentation.dia" logoutput="true" />
+    </target>
+
+    <!-- PHP 7 Compatibility Checker https://github.com/sstalle/php7cc -->
+    <target name="static:7cc" description="Check the compatibility of the source code with PHP 7.">
+        <echo msg="Check the compatibility of the source code with PHP 7." />
+        <exec command="php7cc --extensions=php ${dir.src} > ${dir.reports}/php7cc.log" passthru="true" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports}/php7cc.log" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+
+</project>

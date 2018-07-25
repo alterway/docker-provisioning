@@ -1,0 +1,5 @@
+**/map/**
+**/om/**
+**/www/app/*Migration/**
+**/www/app/SymfonyRequirements.php
+**/www/app/AppCache.php

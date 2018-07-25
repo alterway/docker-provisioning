@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="frontend" description="Frontend build" default="frontend:info" basedir=".">
+
+    <target name="frontend:info">
+        <echo>This file is a shortcut build for frontend-ers</echo>
+    </target>
+
+    <target name="frontend:assets"
+        depends="assets:install, assetic:dump"
+        description="Dumping all assets and installing assets"
+        />
+
+    <target name="assetic:dump" description="Dumping all assets">
+        <echo msg="cmd: app/console assetic:dump --env=${project.env.sf}" />
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="assetic:dump" />
+            <arg line="--env=${project.env.sf}" />
+        </exec>
+    </target>
+
+    <target name="assets:install" description="Installing assets">
+        <echo msg="cmd: app/console assets:install web --symlink" />
+        <exec executable="php" passthru="false" logoutput="true">
+            <arg line="app/console" />
+            <arg line="assets:install" />
+            <arg line="web" />
+            <arg line="--symlink" />
+        </exec>
+    </target>
+
+</project>

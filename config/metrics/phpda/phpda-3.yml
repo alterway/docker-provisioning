@@ -1,0 +1,7 @@
+groupLength: 4
+visitor:
+  - PhpDA\Parser\Visitor\TagCollector
+  - PhpDA\Parser\Visitor\UnsupportedEvalCollector
+  - PhpDA\Parser\Visitor\UnsupportedFuncCollector
+  - PhpDA\Parser\Visitor\UnsupportedVarCollector
+  - PhpDA\Parser\Visitor\UnsupportedGlobalCollector
