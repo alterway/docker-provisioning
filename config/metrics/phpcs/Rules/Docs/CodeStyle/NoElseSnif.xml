@@ -1,0 +1,26 @@
+<documentation title="This sniff detects if  'else' or 'elseif' is used.">
+    <standard>
+    <![CDATA[
+This sniff detects if  'else' or 'elseif' is used.
+    ]]>
+    </standard>
+    <code_comparison>
+        <code title="Valid: no else condition">
+        <![CDATA[
+$c = 'coin';
+if (true === $a && true === $b) {
+    $c = 'coincoin';
+}
+        ]]>
+        </code>
+        <code title="Invalid: else condition whitch can be avoid">
+        <![CDATA[
+if (true === $a && true === $b) {
+    $c = 'coincoin';
+} else {
+    $c = 'coin';
+}
+        ]]>
+        </code>
+    </code_comparison>
+</documentation>

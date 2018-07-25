@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="doctrine" description="Frontend build" default="doctrine:info" basedir=".">
+
+    <if>
+        <not>
+            <isset property="project.esb.type"/>
+        </not>
+        <then>
+            <property name="project.esb.type" value="${env.ESB__RABBITMQ__TYPE__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.guest.user"/>
+        </not>
+        <then>
+            <property name="project.esb.guest.user" value="${env.ESB__RABBITMQ__GUEST__USER__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.guest.password"/>
+        </not>
+        <then>
+            <property name="project.esb.guest.password" value="${env.ESB__RABBITMQ__GUEST__PASSWORD__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.vhostName"/>
+        </not>
+        <then>
+            <property name="project.esb.vhostName" value="${env.ESB__RABBITMQ__VHOST__NAME__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.host"/>
+        </not>
+        <then>
+            <property name="project.esb.host" value="${env.ESB__RABBITMQ__HOST__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.port"/>
+        </not>
+        <then>
+            <property name="project.esb.port" value="${env.ESB__RABBITMQ__PORT__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.user.login"/>
+        </not>
+        <then>
+            <property name="project.esb.user.login" value="${env.ESB__RABBITMQ__USER__LOGIN__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.user.password"/>
+        </not>
+        <then>
+            <property name="project.esb.user.password" value="${env.ESB__RABBITMQ__USER__PASSWORD__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.user.tags"/>
+        </not>
+        <then>
+            <property name="project.esb.user.tags" value="${env.ESB__RABBITMQ__USER__TAGS__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.data.queues"/>
+        </not>
+        <then>
+            <property name="project.esb.data.queues" value="${env.ESB__RABBITMQ__DATA__QUEUES__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.data.exchanges"/>
+        </not>
+        <then>
+            <property name="project.esb.data.exchanges" value="${env.ESB__RABBITMQ__DATA__EXCHANGES__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.data.bindings"/>
+        </not>
+        <then>
+            <property name="project.esb.data.bindings" value="${env.ESB__RABBITMQ__DATA__BINDINGS__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.definition.file"/>
+        </not>
+        <then>
+            <property name="project.esb.definition.file" value="${env.ESB__RABBITMQ__DEFINITION__FILE__ENV}" />
+        </then>
+    </if>
+
+    <if>
+        <not>
+            <isset property="project.esb.definition.dir"/>
+        </not>
+        <then>
+            <property name="project.esb.definition.dir" value="${env.ESB__RABBITMQ__DEFINITION__DIR__ENV}" />
+        </then>
+    </if>
+
+
+    <target name="esb:info" description="">
+        <echo>This is a set of tools for esb managment</echo>
+    </target>
+
+    <target name="esb:vhost:create" description="Creates a vhost">
+        <echo>Creating vhost</echo>
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-create-vhost.sh '${project.esb.guest.user}' '${project.esb.guest.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.vhostName}'" logoutput="true"/>
+    </target>
+
+    <target name="esb:user:create" description="In a vhost, creates a user and grants privileges to him">
+        <echo>Creating user and granting privilages</echo>
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-create-user.sh '${project.esb.guest.user}' '${project.esb.guest.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.vhostName}' '${project.esb.user.login}' '${project.esb.user.password}' '${project.esb.user.tags}'" logoutput="true"/>
+    </target>
+
+    <target name="esb:queue:create" description="In a vhost, creates queues">
+        <echo>Creating user and granting privilages</echo>
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-create-queue-loop.sh '${project.esb.user.login}' '${project.esb.user.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.vhostName}' '${project.esb.data.queues}'" logoutput="true"/>
+    </target>
+
+    <target name="esb:exchange:create" description="In a vhost, creates exchanges">
+        <echo>Creating exchanges</echo>
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-create-exchange-loop.sh '${project.esb.user.login}' '${project.esb.user.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.vhostName}' '${project.esb.data.exchanges}'" logoutput="true"/>
+    </target>
+
+    <target name="esb:binding:create" description="In a vhost, binds exchanges to queues">
+        <echo>Binding exchanges to queues</echo>
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-create-binding-loop.sh '${project.esb.user.login}' '${project.esb.user.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.vhostName}' '${project.esb.data.bindings}'" logoutput="true"/>
+    </target>
+
+    <target name="esb:create" depends="esb:vhost:create, esb:user:create, esb:queue:create, esb:exchange:create, esb:binding:create" description="Creates a vhost, user, queues, exchange and bindings">
+        <echo>Building esb</echo>
+    </target>
+
+    <target name="esb:drop" description="Drops vhost (and everything)">
+        <echo>Droping vhost</echo>
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-drop-vhost.sh ${project.esb.vhostName}" logoutput="true"/>
+    </target>
+
+    <target name="esb:import" description="Imports broker definition from file">
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-import-global-definition.sh '${project.esb.guest.user}' '${project.esb.guest.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.definition.dir}/${project.esb.definition.file}'" />
+    </target>
+
+    <target name="esb:export" description="Exports broker definition (optionally in a file)">
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-import-global-definition.sh '${project.esb.guest.user}' '${project.esb.guest.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.definition.dir}/${project.esb.definition.file}'" />
+    </target>
+
+    <target name="esb:build" description="if file definition => import else if data from en var => create">
+        <available file="${project.esb.definition.file}" type="file" filepath="${project.esb.definition.dir}" property="file.Exists" />
+        <if>
+            <isset property="file.Exists"/>
+            <then>
+                <echo>... Imports broker definition from file ${project.esb.definition.dir}/${project.esb.definition.file}</echo>
+                <phingcall target="esb:import" />
+            </then>
+            <elseif>
+                <or>
+                    <isset property="project.esb.data.queues" />
+                    <isset property="project.esb.data.exchanges" />
+                    <isset property="project.esb.data.bindings" />
+                </or>
+                <then>
+                    <echo>... Buildings broker from data</echo>
+                    <phingcall target="esb:create" />
+                </then>
+            </elseif>
+            <else>
+                <echo>... Missing data to build or import esb</echo>
+            </else>
+        </if>
+    </target>
+
+    <target name="esb:rebuild" depends="esb:drop, esb:build" description="Creates a vhost, user, queues, exchange and bindings">
+        <exec command="${dir.bin}/provisioners/esb/${project.esb.type}/${project.esb.type}-create-queue.sh '${project.esb.user.login}' '${project.esb.user.password}' '${project.esb.host}' '${project.esb.port}' '${project.esb.vhostName}'" logoutput="true"/>
+    </target>
+</project>

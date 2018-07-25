@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="functional" description="tests unit build definition" default="functional:info" basedir=".">
+
+    <target name="functional:info">
+        <echo>This file contains the central configuration for functionnal test with phpunit and behat</echo>
+    </target>
+
+    <!-- Configuration for Behat. -->
+    <if>
+        <or>
+            <not><isset property="behat.options"/></not>
+            <equals arg1="${behat.options}" arg2="" />
+        </or>
+        <then><property name="behat.options" value="--profile=chrome" /></then>
+    </if>
+    <if>
+        <isset property="behat.options"/>
+        <then>
+            <property name="oldproperty" value="${behat.options}"/>
+            <property name="verify.behat.options" value="${oldproperty}">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+    <if>
+        <or>
+            <not><isset property="behat.file"/></not>
+            <equals arg1="${behat.file}" arg2="" />
+        </or>
+        <then>
+            <property name="verify.behat.file" value="behat-${project.env.sf}.yml" />
+        </then>
+        <else>
+            <property name="verify.behat.file" value="${behat.file}" />
+        </else>
+    </if>
+
+    <!-- Unit tests -->
+    <target name="unit:unit" description="Executes unit tests. Execute all of them by default, but you can specify option 'phpunit.group' to set group(s) of execution.">
+        <if>
+            <not><isset property="phpunit.group"/></not>
+            <then>
+                <echo msg="Running unit tests:
+                    phpunit
+                    --log-junit ${dir.reports.phpunit}/phpunit.xml
+                    --coverage-clover ${dir.reports.phpunit}/clover.xml
+                    --coverage-html ${dir.reports.phpunit}/coverage
+                    --coverage-text
+                    --colors=never
+                    -c ${dir.app}
+                    --debug" />
+                <exec command="phpunit
+                    --log-junit ${dir.reports.phpunit}/phpunit.xml
+                    --coverage-clover ${dir.reports.phpunit}/clover.xml
+                    --coverage-html ${dir.reports.phpunit}/coverage
+                    --coverage-text
+                    --colors=never
+                    -c ${dir.app}
+                    --debug" passthru="true" />
+            </then>
+            <else>
+                <echo msg="Running unit tests:
+                    phpunit
+                    --group ${phpunit.group}
+                    --log-junit ${dir.reports.phpunit}/phpunit-${phpunit.group}.xml
+                    --coverage-clover ${dir.reports.phpunit}/clover-${phpunit.group}.xml
+                    --coverage-html ${dir.reports.phpunit}/coverage-${phpunit.group}
+                    --coverage-text
+                    --colors=never
+                    -c ${dir.app}
+                    --debug" />
+                <exec command="phpunit
+                    --group ${phpunit.group}
+                    --log-junit ${dir.reports.phpunit}/phpunit-${phpunit.group}.xml
+                    --coverage-clover ${dir.reports.phpunit}/clover-${phpunit.group}.xml
+                    --coverage-html ${dir.reports.phpunit}/coverage-${phpunit.group}
+                    --coverage-text
+                    --colors=never
+                    -c ${dir.app}
+                    --debug" passthru="true" />
+            </else>
+        </if>
+    </target>
+
+    <!-- system tests -->
+    <target name="system:behat-options"
+            description="Launch system behat with options">
+        <echo msg="Running behat tests : behat -vvv ${verify.behat.options} --config ${dir.behat}/${verify.behat.file} -f pretty -o ${dir.reports.behat}/pretty.out " />
+        <exec command="behat -vvv ${verify.behat.options} --config ${dir.behat}/${verify.behat.file} -f pretty -o ${dir.reports.behat}/pretty.out " passthru="true"/>
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.behat}/pretty.out" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="system:behat-chrome"
+            description="Launch system behat with chrome profile">
+        <echo msg="Running behat tests : behat --profile=chrome --config ${dir.behat}/behat-${project.env.sf}.yml -f pretty -o ${dir.reports.behat}/pretty.out" />
+        <exec command="behat -vvv ${verify.behat.options} --profile=chrome --config ${dir.behat}/behat-${project.env.sf}.yml -f pretty -o ${dir.reports.behat}/pretty.out" passthru="true" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.behat}/pretty.out" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="system:behat-firefox"
+            description="Launch system behat with firefox profile">
+        <echo msg="Running behat tests : behat --profile=firefox --config ${dir.behat}/behat-${project.env.sf}.yml -f pretty -o ${dir.reports.behat}/pretty.out" />
+        <exec command="behat -vvv ${verify.behat.options} --profile=firefox --config ${dir.behat}/behat-${project.env.sf}.yml -f pretty -o ${dir.reports.behat}/pretty.out" passthru="true" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.behat}/pretty.out" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="system:behat-phantomjs"
+            description="Launch system behat with phantomjs profile">
+        <echo msg="Running behat tests : behat --profile=phantomjs --config ${dir.behat}/behat-${project.env.sf}.yml -f pretty -o ${dir.reports.behat}/pretty.out" />
+        <exec command="behat -vvv ${verify.behat.options} --profile=phantomjs --config ${dir.behat}/behat-${project.env.sf}.yml -f pretty -o ${dir.reports.behat}/pretty.out" passthru="true" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports.behat}/pretty.out" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+
+</project>

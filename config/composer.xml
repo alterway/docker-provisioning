@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="composer" description="Composer build" default="composer:info" basedir=".">
+
+    <target name="composer:info">
+        <echo>This file contains the central configuration for prepare build</echo>
+    </target>
+
+    <!-- ****************** -->
+    <!-- Project properties -->
+    <!-- ****************** -->
+    <property name="real.composer.options" value="" />
+    <if>
+        <isset property="composer.options"/>
+        <then>
+            <property name="real.composer.options" value="${composer.options}" override="true">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+
+    <property name="real.composer.show.options" value="" />
+    <if>
+        <isset property="composer.show.options"/>
+        <then>
+            <property name="real.composer.show.options" value="${composer.show.options}" override="true">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+
+    <property name="real.composer.dump.options" value="" />
+    <if>
+        <isset property="composer.dump.options"/>
+        <then>
+            <property name="real.composer.dump.options" value="${composer.dump.options}" override="true">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+
+    <!-- Composer -->
+    <target name="composer:self" description="Update composer tool">
+        <echo msg="Old version of composer before self update." />
+        <exec command="composer -v |grep 'Composer version'" passthru="true" logoutput="true"/>
+        <echo msg="Update composer tool..." />
+        <exec executable="composer" passthru="false" logoutput="false">
+            <arg value="self-update" />
+        </exec>
+        <echo msg="New version of composer after self update." />
+        <exec command="composer -v |grep 'Composer version'" passthru="true" logoutput="true"/>
+    </target>
+
+    <target name="composer:install" description="Installing vendors with composer">
+        <echo msg="Installing vendors with composer." />
+        <echo msg="  cmd= composer install --no-interaction --prefer-dist ${real.composer.options}" />
+        <exec command="composer install --no-interaction --prefer-dist ${real.composer.options}" passthru="true" logoutput="true" checkreturn="true"/>
+    </target>
+
+    <target name="composer:update" description="Updating vendors with composer">
+        <echo msg="Updating vendors with composer update command."/>
+        <echo msg="  cmd= composer update --no-interaction --with-dependencies ${real.composer.options}" />
+        <exec command="composer update --no-interaction --with-dependencies ${real.composer.options}" passthru="true" logoutput="true" checkreturn="true"/>
+    </target>
+
+    <target name="composer:require" description="Updating vendors with composer">
+        <echo msg="Updating vendors with composer update command."/>
+        <echo msg="  cmd= composer require ${real.composer.options}" />
+        <exec command="composer require ${real.composer.options}" passthru="true" logoutput="true" checkreturn="true"/>
+    </target>
+
+    <target name="composer:clear-cache" description="Clear the cache of composer">
+        <echo msg="cmd: composer clear-cache" />
+        <exec command="composer clear-cache" logoutput="true"/>
+    </target>
+
+    <target name="composer:dump" description="Optimize composer">
+        <echo msg="  cmd= composer dump-autoload --optimize ${real.composer.dump.options}" />
+        <exec command="composer dump-autoload --optimize ${real.composer.dump.options}" passthru="true" />
+    </target>
+
+    <target name="composer:show" description="Show all version package">
+        <echo msg="  cmd= composer show ${real.composer.show.options}" />
+        <exec command="composer show ${real.composer.show.options}" passthru="true" />
+    </target>
+
+</project>

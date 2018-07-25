@@ -1,0 +1,10 @@
+mode: 'usage'
+source: '../src'
+filePattern: '*.php'
+ignore: 'tests'
+formatter: 'PhpDA\Writer\Strategy\Svg'
+target: '/www-build/testupmc'
+groupLength: 1
+visitor:
+  - PhpDA\Parser\Visitor\TagCollector
+  - PhpDA\Parser\Visitor\SuperglobalCollector

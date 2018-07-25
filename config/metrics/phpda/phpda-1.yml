@@ -1,0 +1,3 @@
+groupLength: 1
+visitor:
+  - PhpDA\Parser\Visitor\TagCollector

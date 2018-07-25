@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="verify" description="Frontend build" default="verify:info" basedir=".">
+
+    <target name="verify:info">
+        <echo>This file is a shortcut build for verify step of the pipeline</echo>
+    </target>
+
+    <!-- ****************** -->
+    <!-- Project properties -->
+    <!-- ****************** -->
+    <if>
+        <not>
+            <isset property="list.commit.files"/>
+        </not>
+        <then>
+            <exec outputProperty="find.verify.list.commit.files" command="find ${project.basedir}/${dir.src} -name '*.php' -type f |tr '\n' ' ' " passthru="false" logoutput="false"/>
+            <property name="verify.list.commit.files" value="${find.verify.list.commit.files}" />
+        </then>
+    </if>
+    <if>
+        <isset property="list.commit.files"/>
+        <then>
+            <property name="oldproperty" value="${list.commit.files}"/>
+            <property name="verify.list.commit.files" value="${oldproperty}">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="www" replace="${project.basedir}" ignoreCase="true"/>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+
+    <target name="verify:smoke">
+        <exec command='find ${dir.src} -name *.php -exec php -ln {} \; > ${dir.reports}/smoke-v0.log' passthru="false" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports}/smoke-v0.log" passthru="false" logoutput="true"/>
+            </then>
+        </if>
+        <exec command='find ${dir.src} -name *.php -exec php -l {} \; > ${dir.reports}/smoke-v1.log' passthru="false" />
+        <if>
+            <equals arg1="${output.file}" arg2="1" />
+            <then>
+                <exec command="cat ${dir.reports}/smoke-v1.log" passthru="false" logoutput="true"/>
+            </then>
+        </if>
+    </target>
+    <target name="verify:smoke-parallel-lint">
+        <exec command='parallel-lint -e php -j 20 ${dir.src}' passthru="false" logoutput="true"/>
+        <exec command='parallel-lint -e php -j 20 --json ${dir.src}  > ${dir.reports}/smoke-parallel-lint.json' passthru="false" />
+    </target>
+
+    <target name="verify:smoke-list">
+        <!-- Use of php -l but no php -ln as we want to have the same configuration everywhere and php.ini may be mandatory on production. -->
+        <exec outputProperty="app.return.phplint.error_nb" command='nb=0; for file in `echo ${verify.list.commit.files}` ; do output=$(php -l $file) ; if [ $(($?)) -ne 0 ]; then nb=$((nb+1)); echo $output; fi; done; echo "### $nb ERRORS ###";' passthru="false" logoutput="true"/>
+        <exec outputProperty="app.return.phplint.line_nb"  command="echo '${app.return.phplint.error_nb}' |grep '###'" passthru="false" logoutput="false"/>
+        <exec outputProperty="app.return.phplint.nb"       command="echo '${app.return.phplint.line_nb}' |grep -P '\d+ (?=ERROR)' -o" passthru="false" logoutput="false"/>
+        <if>
+            <versioncompare version="${app.return.phplint.nb}" desiredVersion="0" operator="gt" />
+            <then>
+                <echo msg="A total of ${app.return.phplint.nb} errors were found." />
+            </then>
+            <else>
+                <echo msg="No errors finded." />
+            </else>
+        </if>
+    </target>
+
+    <target name="verify:sanity">
+        <echo>This file is a shortcut build for verify sanity step of the pipeline</echo>
+    </target>
+
+</project>

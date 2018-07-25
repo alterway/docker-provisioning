@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- http://phpunit.de/manual/current/en/appendixes.configuration.html -->
+<phpunit
+    backupGlobals               = "false"
+    backupStaticAttributes      = "false"
+    colors                      = "true"
+    convertErrorsToExceptions   = "true"
+    convertNoticesToExceptions  = "true"
+    convertWarningsToExceptions = "true"
+    processIsolation            = "false"
+    stopOnFailure               = "false"
+    syntaxCheck                 = "false"
+    bootstrap                   = "../app/autoload.php" >
+
+    <testsuites>
+        <testsuite name="Project Test Suite">
+            <directory>../%%testsuite.directory%%/*Bundle/Tests</directory>
+            <directory>../%%testsuite.directory%%</directory>
+        </testsuite>
+    </testsuites>
+
+    <!-- Attention, le filter ne sert qu'à la couverture de code ! -->
+    <filter>
+        <whitelist>
+            <directory>../src</directory>
+            <exclude>
+                <directory>../%%testsuite.directory%%/*Bundle/Controller</directory>
+                <directory>../%%testsuite.directory%%/*Bundle/Resources</directory>
+                <directory>../%%testsuite.directory%%/*Bundle/Features</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+
+</phpunit>

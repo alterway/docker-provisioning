@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="prepare" description="Prepare build" default="prepare:info" basedir=".">
+
+    <target name="prepare:info">
+        <echo>This file contains the central configuration for prepare build</echo>
+    </target>
+
+    <!-- Set owner -->
+    <target name="prepare:owner-change">
+        <!--<property name="tmp.repo.path" value="${dir.web}/ ${dir.cache}/ ${dir.log}/ ${dir.uploads}/ ${dir.composer.cache}/" />-->
+
+        <!--<echo message=" Set files perms. to allow to execute shelscript files: chmod -R +x ${dir.bin}/* ${dir.doctrine.migration}"/>-->
+        <!--<exec command="chmod -R +x ${dir.bin}/* ${dir.doctrine.migration}" escape="false" logoutput="true" />-->
+
+        <!--<echo message=" Set files perms. to allow httpd to execute php files : chmod -R 0755 ${project.basedir}"/>-->
+        <!--<exec command="chmod -R 0755 ${project.basedir}" escape="false" logoutput="true" />-->
+
+        <!--<echo message=" Set files perms. to allow to write in documentation directory: chmod -R 0777 ${dir.docs.sphinx.source} ${project.dir.build} ${dir.cache} ${dir.log} ${dir.uploads}"/>-->
+        <!--<exec command="chmod -R 0777 ${dir.docs.sphinx.source} ${project.dir.build} ${dir.cache} ${dir.log} ${dir.uploads}" escape="false" logoutput="true" />-->
+
+        <!--<property name="tmp.repo.path" value="${dir.web}/ ${dir.cache}/ ${dir.log}/ ${dir.uploads}/ ${dir.composer.cache}/" />-->
+
+        <!--<echo message=" Set files perms. to allow to execute shelscript files: chmod -R +x ${dir.bin}/* ${dir.doctrine.migration}"/>-->
+        <!--<exec command="chmod -R +x ${dir.bin}/* ${dir.doctrine.migration}" escape="false" logoutput="true" />-->
+
+        <!--<echo message=" Set files perms. to allow httpd to execute php files : chmod -R 0755 ${project.basedir}"/>-->
+        <!--<exec command="chmod -R 0755 ${project.basedir}" escape="false" logoutput="true" />-->
+
+        <!--<echo message=" Set files perms. : chgrp ${owner.group} -R ${tmp.repo.path}"/>-->
+        <!--<exec command="chgrp ${owner.group} -R ${tmp.repo.path}" escape="false" logoutput="true"/>-->
+
+        <!--<echo message=" Set files perms. : chmod ug+r -R  ${tmp.repo.path}"/>-->
+        <!--<exec command="chmod ug+r -R  ${tmp.repo.path}" escape="false" logoutput="true"/>-->
+
+        <!--<echo message=" Set files perms. : chmod g+rw -R ${tmp.repo.path}"/>-->
+        <!--<exec command="chmod g+rw -R ${tmp.repo.path}" escape="false" logoutput="true"/>-->
+
+        <!--<echo message=" Set index file perms. for security to forbid the update of this file : chmod o-rwx ${dir.web}/index.php"/>-->
+        <!--<exec command="chmod o-rwx ${dir.web}/index.php" escape="false" logoutput="true"/>-->
+
+        <echo message=" Set files perms. : chown -R ${owner.user}:${owner.group} ${project.basedir} ${dir.log} ${dir.cache} ${dir.cache.sfynx} ${dir.uploads} ${project.dir.build} ${project.dir.documentation} ${project.dir.integration}"/>
+        <exec command="chown -Rf ${owner.user}:${owner.group} ${project.basedir} ${dir.doctrine.migration} ${dir.log} ${dir.cache} ${dir.cache.sfynx} ${dir.uploads} ${project.dir.build} ${project.dir.documentation} ${project.dir.integration}" escape="false" logoutput="false"/>
+    </target>
+
+    <!-- Project build clean -->
+    <target name="prepare:clean" description="Clean up cache directories.">
+        <echo msg="Cleaning cache directories of the ${project.env.sf} environment ... in ${dir.cache} directory" />
+        <echo msg="List of ${dir.cache} directory cache before clean up ..." />
+        <echo msg="_________________________" />
+        <exec command="ls -al ${dir.cache}" escape="false" logoutput="true"/>
+        <exec command="rm -rf ${dir.cache}/*" escape="false" logoutput="true"/>
+        <echo msg="List of ${dir.cache} directory cache after clean up ..." />
+        <echo msg="_________________________" />
+        <exec command="ls -al ${dir.cache}" escape="false" logoutput="true"/>
+        <echo msg="List of all log files ..." />
+        <echo msg="_________________________" />
+        <exec command="ls -al ${dir.log}" escape="false" logoutput="true"/>
+        <echo msg="Repository of the log files ..." />
+        <echo msg="_______________________________" />
+        <exec command="ls -al ${dir.log}/../" escape="false" logoutput="true"/>
+    </target>
+
+    <!-- Project build warmup -->
+    <target name="prepare:warmup" description="Warmup up the cache.">
+        <echo msg="Repository of the log files ..." />
+        <echo msg="_______________________________" />
+        <exec executable="php" passthru="true" returnProperty="app.return.update" logoutput="false">
+            <arg line="app/console" />
+            <arg line="cache:warmup" />
+            <arg line="--env=${project.env.sf}" />
+            <arg line="--no-interaction" />
+        </exec>
+        <echo msg="List of ${dir.cache} directory cache after clean up ..." />
+        <echo msg="_________________________" />
+        <exec command="ls -al ${dir.cache}" escape="false" logoutput="true"/>
+        <echo msg="List of all log files ..." />
+        <echo msg="_________________________" />
+        <exec command="ls -al ${dir.log}" escape="false" logoutput="true"/>
+        <echo msg="Repository of the log files ..." />
+        <echo msg="_______________________________" />
+        <exec command="ls -al ${dir.log}/../" escape="false" logoutput="true"/>
+    </target>
+
+    <target name="prepare:clean-oldbuild" description="Clean up build old directories.">
+        <echo msg="Cleaning build old directories ..." />
+        <exec command="chmod -R 0777 ${dir.bin}/provisioners/release-build.sh" escape="false" />
+        <exec command='${dir.bin}/provisioners/release-build.sh "${dir.build}" "${project.build.age}"' passthru="false" />
+    </target>
+
+    <!-- Project build prepare -->
+    <target name="prepare:folders" description="Create build directories.">
+        <echo msg="Creating build directories ..." />
+        <echo msg="# Create composer cache directory: ${dir.composer.cache}." /><mkdir dir="${dir.composer.cache}" />
+        <echo msg="# Create vendor: ${dir.vendor}." /><mkdir dir="${dir.vendor}" />
+        <echo msg="# Create uploads: ${dir.uploads}." /><mkdir dir="${dir.uploads}" />
+        <echo msg="# Create cache: ${dir.cache}." /><mkdir dir="${dir.cache}" />
+        <echo msg="# Create log: ${dir.log}." /><mkdir dir="${dir.log}" />
+        <echo msg="# Create build: ${dir.build}." /><mkdir dir="${dir.build}" />
+        <echo msg="# Create docs: ${dir.docs}." /><mkdir dir="${dir.docs}" />
+        <echo msg="# Create docs: ${dir.doctrine.migration}." /><mkdir dir="${dir.doctrine.migration}" />
+        <echo msg="# Create docs about phpcb: ${dir.docs.phpcb}." /><mkdir dir="${dir.docs.phpcb}" />
+        <echo msg="# Create docs about phpdoc: ${dir.docs.phpdoc}." /><mkdir dir="${dir.docs.phpdoc}" />
+        <echo msg="# Create docs about phpsphinx: ${dir.docs.sphinx}." /><mkdir dir="${dir.docs.sphinx}" />
+        <echo msg="# Create docs about API: ${dir.docs.api}." /><mkdir dir="${dir.docs.api}" />
+        <echo msg="# Create reports: ${dir.reports}." /><mkdir dir="${dir.reports}" />
+        <echo msg="# Create reports about PHP Code Sniffer: ${dir.reports.phpcs}." /><mkdir dir="${dir.reports.phpcs}" />
+        <echo msg="# Create reports about PHP Copy-Paste Detector: ${dir.reports.phpcpd}." /><mkdir dir="${dir.reports.phpcpd}" />
+        <echo msg="# Create reports about PHP Dead Code Detection: ${dir.reports.phpdcd}." /><mkdir dir="${dir.reports.phpdcd}" />
+        <echo msg="# Create reports about PHPUnit: ${dir.reports.phpunit}." /><mkdir dir="${dir.reports.phpunit}" />
+        <mkdir dir="${dir.reports.phpunit}/coverage" />
+        <mkdir dir="${dir.reports.phpunit}/coverage-${phpunit.group}" />
+        <echo msg="# Create reports about pdepend: ${dir.reports.pdepend}." /><mkdir dir="${dir.reports.pdepend}" />
+        <echo msg="# Create reports about sonarQube: ${dir.reports.sonar}." /><mkdir dir="${dir.reports.sonar}" />
+        <echo msg="# Create reports about behat: ${dir.reports.behat}." /><mkdir dir="${dir.reports.behat}" />
+        <echo msg="# Create reports about PhpMetrics: ${dir.reports.phpmetrics}." /><mkdir dir="${dir.reports.phpmetrics}" />
+        <echo msg="# Create reports about gatling: ${dir.reports.gatling}." /><mkdir dir="${dir.reports.gatling}" />
+        <echo msg="# Create reports about PHPStorm Inspections: ${dir.reports.phpstorm.inspection}." /><mkdir dir="${dir.reports.phpstorm.inspection}" />
+        <echo msg="# Create reports UML: ${dir.reports.uml}." /><mkdir dir="${dir.reports.uml}" />
+        <echo msg="# Create reports about architecture dependencies graphics from DIA: ${dir.reports.diacenter.autodia}." /><mkdir dir="${dir.reports.diacenter.autodia}" />
+        <mkdir dir="${dir.reports.db.schemaspy}" />
+        <mkdir dir="${dir.reports.diacenter.autodia}" />
+        <echo msg="### DONE." />
+        <tempfile property="phpunit" destDir="${dir.reports.phpunit}" suffix=".xml"/>
+    </target>
+
+    <!-- Project build prepare -->
+    <!-- phing -f build.xml build:xx -logger phing.listener.DefaultLogger -Dproject.dbName=xx -Dproject.dbUser=xx -Dproject.dbPw=xx ... -->
+    <target name="prepare:configuration" description="Prepare files configuration.">
+        <echo msg="Prepare phpunit configuration file : ${dir.app}/phpunit.xml" />
+        <copy file="${dir.metrics}/phpunit.xml.dist" tofile="${dir.app}/phpunit.xml" overwrite="true">
+            <filterchain>
+                <replacetokens begintoken="%%" endtoken="%%">
+                    <token key="testsuite.directory" value="${project.dir.test}" />
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+
+    <!-- Set right -->
+    <target name="prepare:right-change">
+        <echo msg="Creating rights directories ... ${dir.uploads} ${dir.cache} ${dir.log}" />
+        <exec command="sudo setfacl -R -m u:${owner.group}:rwx -m u:${owner.user}:rwx ${dir.cache} ${dir.log} ${dir.uploads}" />
+        <exec command="sudo setfacl -dR -m u:${owner.group}:rwx -m u:${owner.user}:rwx ${dir.cache} ${dir.log} ${dir.uploads}" />
+    </target>
+
+</project>
