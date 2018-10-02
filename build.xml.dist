@@ -140,10 +140,11 @@
         </else>
     </if>
     <property name="dir.src" value="${project.dir.src}" />
-    <property name="dir.web" value="${project.basedir}/web" />
+    <property name="dir.web" value="${project.basedir}/public" />
     <property name="dir.bin" value="${project.basedir.provisioning}/bin" />
     <property name="dir.dashboard" value="${project.basedir.provisioning}/dashboard" />
     <property name="dir.metrics" value="${project.basedir.provisioning}/config/metrics" />
+    <property name="dir.changelog" value="${project.basedir}/app/config/changelog" />
     <property name="dir.behat" value="${project.basedir}/app/config/behat" />
     <property name="dir.phpstorm.bin" value="/home/etienne/PhpStorm/bin/" />
     <property name="dir.vendor" value="${project.dir.vendor}" />
