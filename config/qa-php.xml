@@ -277,14 +277,13 @@
         <exec
                 outputProperty="app.return.php_code_summary"
                 command="phpcs
+                --standard=${real.phpcs.ruleset.xml}
                 --file-list=phpcs.files.list.${random}.txt
                 --ignore=$(cat '${dir.metrics}/exclude.phpcs.patterns' |tr '\n' ',')
                 --extensions=php
                 --encoding=utf-8
                 --colors
                 --report=summary
-                --report-xml=${dir.reports.phpcs}/report.xml
-                --report-json=${dir.reports.phpcs}/report.json
                 --report-width=${real.phpcs.width}
                 "
                 logoutput="true"

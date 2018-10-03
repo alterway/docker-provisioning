@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="git" description="Frontend build" default="git:info" basedir=".">
 
+    <!-- Configuration for Behat. -->
+    <if>
+        <or>
+            <not><isset property="git.options"/></not>
+            <equals arg1="${git.options}" arg2="" />
+        </or>
+        <then><property name="git.options" value="--profile=chrome" /></then>
+    </if>
+    <if>
+        <isset property="git.options"/>
+        <then>
+            <property name="oldproperty" value="${git.options}"/>
+            <property name="verify.git.options" value="${oldproperty}">
+                <filterchain>
+                    <replaceregexp>
+                        <regexp pattern="," replace=" " ignoreCase="true"/>
+                    </replaceregexp>
+                </filterchain>
+            </property>
+        </then>
+    </if>
+
     <target name="git:info">
         <echo>This file is a shortcut build for git definition</echo>
     </target>
@@ -34,7 +56,13 @@
         <gitcheckout
             repository="${project.basedir}"
             branchname="${project.branch}" quiet="true" forceCreate="true"/>
-    </target>           
+    </target>
+
+    <target name="git:changelog">
+        <echo msg="Generate changelog from git repository" />
+        <echo msg="cmd:: changelog-generator generate ${verify.git.options}"/>
+        <exec command="changelog-generator generate ${verify.git.options}" passthru="true" />
+    </target>
 
 </project>
 

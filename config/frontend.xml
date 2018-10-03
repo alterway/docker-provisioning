@@ -6,8 +6,8 @@
     </target>
 
     <target name="frontend:assets"
-        depends="assets:install, assetic:dump"
-        description="Dumping all assets and installing assets"
+        depends="assets:install"
+        description="installing assets"
         />
 
     <target name="assetic:dump" description="Dumping all assets">
@@ -20,11 +20,10 @@
     </target>
 
     <target name="assets:install" description="Installing assets">
-        <echo msg="cmd: app/console assets:install web --symlink" />
+        <echo msg="cmd: app/console assets:install --symlink" />
         <exec executable="php" passthru="false" logoutput="true">
             <arg line="app/console" />
             <arg line="assets:install" />
-            <arg line="web" />
             <arg line="--symlink" />
         </exec>
     </target>
