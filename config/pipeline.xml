@@ -36,11 +36,11 @@
             description="Update dev environment from the scratch" />
 
     <target name="verify:normal"
-            depends="verify:smoke"
+            depends="verify:smoke-list"
             description="Rebuild dev environment from the scratch" />
 
     <target name="verify:recette"
-            depends="verify:smoke, verify:sanity"
+            depends="verify:smoke-list, verify:sanity"
             description="Rebuild dev environment from the scratch" />
 
     <target name="functional:unit"

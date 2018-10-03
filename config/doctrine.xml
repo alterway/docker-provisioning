@@ -44,7 +44,7 @@
     </target>
 
     <target name="doctrine:update" description="Update doctrine tables">
-        <echo>... we update schemas in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} mysql host</echo>
+        <echo>... we update schemas in ${project.env.sf} environment of the ${phing.project.name} project from ${project.dbHost} host</echo>
         <if>
             <equals arg1="${project.dbDriver}" arg2="orm" />
             <then>

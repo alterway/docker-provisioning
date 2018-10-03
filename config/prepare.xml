@@ -97,7 +97,6 @@
         <echo msg="# Create log: ${dir.log}." /><mkdir dir="${dir.log}" />
         <echo msg="# Create build: ${dir.build}." /><mkdir dir="${dir.build}" />
         <echo msg="# Create docs: ${dir.docs}." /><mkdir dir="${dir.docs}" />
-        <echo msg="# Create docs: ${dir.doctrine.migration}." /><mkdir dir="${dir.doctrine.migration}" />
         <echo msg="# Create docs about phpcb: ${dir.docs.phpcb}." /><mkdir dir="${dir.docs.phpcb}" />
         <echo msg="# Create docs about phpdoc: ${dir.docs.phpdoc}." /><mkdir dir="${dir.docs.phpdoc}" />
         <echo msg="# Create docs about phpsphinx: ${dir.docs.sphinx}." /><mkdir dir="${dir.docs.sphinx}" />

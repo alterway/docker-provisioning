@@ -128,14 +128,23 @@
         </then>
     </if>
 
-    <property name="dir.doctrine.migration" value="${dir.app}/${project.dir.doctrine.migration}" />
-    <property name="dir.composer.cache" value="${project.dir.composer.cache}" />
     <property name="dir.app" value="${project.basedir}/app" />
+    <available file="${dir.app}/${project.dir.doctrine.migration}" type="dir" property="dir.Exists" />
+    <if>
+        <isset property="dir.Exists"/>
+        <then>
+            <property name="dir.doctrine.migration" value="${dir.app}/${project.dir.doctrine.migration}" />
+        </then>
+        <else>
+            <property name="dir.doctrine.migration" value="" />
+        </else>
+    </if>
     <property name="dir.src" value="${project.dir.src}" />
-    <property name="dir.web" value="${project.basedir}/web" />
+    <property name="dir.web" value="${project.basedir}/public" />
     <property name="dir.bin" value="${project.basedir.provisioning}/bin" />
     <property name="dir.dashboard" value="${project.basedir.provisioning}/dashboard" />
     <property name="dir.metrics" value="${project.basedir.provisioning}/config/metrics" />
+    <property name="dir.changelog" value="${project.basedir}/app/config/changelog" />
     <property name="dir.behat" value="${project.basedir}/app/config/behat" />
     <property name="dir.phpstorm.bin" value="/home/etienne/PhpStorm/bin/" />
     <property name="dir.vendor" value="${project.dir.vendor}" />
