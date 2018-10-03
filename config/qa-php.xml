@@ -284,8 +284,6 @@
                 --encoding=utf-8
                 --colors
                 --report=summary
-                --report-xml=${dir.reports.phpcs}/report.xml
-                --report-json=${dir.reports.phpcs}/report.json
                 --report-width=${real.phpcs.width}
                 "
                 logoutput="true"
